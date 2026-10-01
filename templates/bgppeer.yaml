@@ -1,0 +1,38 @@
+{{- range .Values.bgppeer }}
+---
+apiVersion: metallb.io/v1beta2
+kind: BGPPeer
+metadata:
+  name: {{ .name }}
+  namespace: metallb-system
+spec:
+  peerAddress: "{{ .address }}"
+  myASN: {{ $.Values.myASN }}
+  peerASN: {{ $.Values.peerASN }}
+  holdTime: 90s
+  keepaliveTime: 30s
+  dualStackAddressFamily: false
+  nodeSelectors:
+  - matchLabels:
+      node-role.kubernetes.io/worker: ""
+{{- end }}
+---
+apiVersion: frrk8s.metallb.io/v1beta1
+kind: FRRConfiguration
+metadata:
+  name: arista-bgp-peer-overrides
+  namespace: openshift-frr-k8s
+spec:
+  bgp:
+    routers:
+    - asn: {{ .Values.myASN }}
+      neighbors:
+{{- range .Values.bgppeer }}
+      - address: "{{ .address }}"
+        asn: {{ $.Values.peerASN }}
+        holdTime: 90s
+        keepaliveTime: 30s
+        toReceive:
+          allowed:
+            mode: all
+{{- end }}

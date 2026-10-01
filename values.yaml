@@ -1,17 +1,33 @@
+# Primary Network ===============================================
 primary_udn:
   name: primary
   subnets: [ 192.168.200.0/24 ]
 
-# oc get providers -A
+# ===============================================================
+# MTV Migration Configuration                                   #
+# ===============================================================
+#   oc get providers -A 
 provider: v8-tlv2
-
-# Network name should be available from vSphere UI
+#   Network name should be available from vSphere UI
 vmware_network_name: VM Network
-
-# Extact network_id from vSphere URL: /.*urn:vmomi:Network:(network-16):.*/ --> network-16
+#   Extact network_id from vSphere URL: /.*urn:vmomi:Network:(network-16):.*/ --> network-16
 vmware_network_id: network-16
 
-# Default Ports to apply to every VM
+# ===============================================================
+# BGPPeer & FRRConfiguration                                    #
+# ===============================================================
+myASN: CHANGEME_MYASN
+peerASN: CHANGEME_PEER
+frrconfiguration: arista-bgp-peer-overrides
+bgppeer:
+  - address: CHANGEME.2
+    name: arista-bgp-peer-a
+  - address: CHANGEME.3
+    name: arista-bgp-peer-b
+
+# ===============================================================
+# Default Ports to apply to every VM                            # 
+# ===============================================================
 global_default_ports:
   - port: 443
   - port: 80
