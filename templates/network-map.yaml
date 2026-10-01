@@ -1,4 +1,4 @@
-{{- range .Values.customers }}
+{{- range .Values.tenants }}
 ---
 apiVersion: forklift.konveyor.io/v1beta1
 kind: NetworkMap

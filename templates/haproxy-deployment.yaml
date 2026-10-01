@@ -1,4 +1,4 @@
-{{- range .Values.customers }}
+{{- range .Values.tenants }}
 ---
 apiVersion: apps/v1
 kind: Deployment

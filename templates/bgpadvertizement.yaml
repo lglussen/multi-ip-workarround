@@ -5,6 +5,6 @@ metadata:
   namespace: metallb-system
 spec:
   ipAddressPools:
-{{- range .Values.customers }}
+{{- range .Values.tenants }}
     - {{ .name }}-ip-pool
 {{- end }}

@@ -2,7 +2,7 @@
 global_default_ports:
   - port: 80
 
-customers:
+tenants:
 - name: waxoff-industries
   subnets: ["10.46.250.10/21"]
   vms:

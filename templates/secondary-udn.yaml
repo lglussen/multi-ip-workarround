@@ -1,4 +1,4 @@
-{{- range .Values.customers }}
+{{- range .Values.tenants }}
 ---
 apiVersion: k8s.ovn.org/v1
 kind: ClusterUserDefinedNetwork

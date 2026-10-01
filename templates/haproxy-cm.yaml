@@ -1,4 +1,4 @@
-{{- range .Values.customers }}
+{{- range .Values.tenants }}
 ---
 apiVersion: v1
 kind: ConfigMap
