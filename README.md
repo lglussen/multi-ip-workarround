@@ -12,7 +12,15 @@ Tenants may be separated into separate variables files or lumped together in one
 ## Run
 ```shell
 
+# dump output to stdout
 helm template . -f tenants.yaml
+
+# pipe output to oc
+helm template . -f tenants.yaml | oc apply -f -
+
+# generate output as individual yaml files for simpler debuging / validation
+helm template . -f tenants.yaml --output-dir generated
+ls -l generated/multi-ip-workaround/templates/
 
 ```
 
