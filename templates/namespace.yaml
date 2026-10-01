@@ -5,12 +5,8 @@ kind: Namespace
 metadata:
   name: {{ .name }}-proxy
   labels:
-    # used by IPAddressPool selector to allow this namespace to request IPs from the pool
     allow-ipaddresspool: {{ .name }}
-
-    # used by UDN selector to idenify this namespace
     secondary-udn: {{ .name }}-secondary
-
 ---
 apiVersion: v1
 kind: Namespace
@@ -20,5 +16,4 @@ metadata:
     k8s.ovn.org/primary-user-defined-network: ""
     primary-udn: {{ $.Values.primary_udn.name }}
     secondary-udn: {{ .name }}-secondary
-
 {{- end }}

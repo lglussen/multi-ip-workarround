@@ -1,0 +1,188 @@
+---
+# Source: multi-ip-workaround/templates/namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: waxoff-industries-proxy
+  labels:
+    allow-ipaddresspool: waxoff-industries
+    secondary-udn: waxoff-industries-secondary
+---
+# Source: multi-ip-workaround/templates/namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: waxoff-industries-mtv
+  labels:
+    k8s.ovn.org/primary-user-defined-network: ""
+    primary-udn: primary
+    secondary-udn: waxoff-industries-secondary
+---
+# Source: multi-ip-workaround/templates/haproxy-cm.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: haproxy-config
+  namespace: waxoff-industries-proxy
+data:
+  haproxy.cfg: |
+    global
+      log stdout format raw local0
+
+    defaults
+      timeout connect 5s
+      timeout client 30s
+      timeout server 30s
+
+    # HTTP frontends — bind on cluster-reachable ports, forward to VM IPs on secondary UDN
+
+    # webapp 10.46.250.15:80 ====================================
+    frontend webapp_0
+      mode http
+      bind *:8080
+      default_backend webapp_0
+
+    backend webapp_0
+      mode http
+      server vm 10.46.250.15:80 check
+---
+# Source: multi-ip-workaround/templates/services.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-10-46-250-15
+  namespace: waxoff-industries-proxy
+  labels:
+    app: proxy
+  annotations:
+    metallb.io/loadBalancerIPs: "10.46.250.15"
+spec:
+  type: LoadBalancer
+  selector:
+    app: proxy
+  ports:
+    # webapp 10.46.250.15:80
+    - port: 80
+      targetPort: 8080
+---
+# Source: multi-ip-workaround/templates/haproxy-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proxy
+  namespace: waxoff-industries-proxy
+  labels:
+    app: proxy
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: proxy
+  template:
+    metadata:
+      labels:
+        app: proxy
+      annotations:
+        # NAD name matches ClusterUserDefinedNetwork name (my-secondary-overlay).
+        # Static IP on the secondary overlay; HAProxy uses this to reach VM backends.
+        k8s.v1.cni.cncf.io/networks: '[{"name":"waxoff-industries-secondary","ips": ["10.46.250.10/21"] }]'
+    spec:
+      containers:
+        - name: haproxy
+          image: registry.access.redhat.com/hi/haproxy:3
+          ports:
+            # webapp 10.46.250.15:80
+            - name: http_0
+              containerPort: 8080
+          volumeMounts:
+            - name: config
+              mountPath: /usr/local/etc/haproxy
+      volumes:
+        - name: config
+          configMap:
+            name: haproxy-config
+---
+# Source: multi-ip-workaround/templates/bgpadvertizement.yaml
+apiVersion: metallb.io/v1beta1
+kind: BGPAdvertisement
+metadata:
+  name: advertize-all
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+    - waxoff-industries-ip-pool
+---
+# Source: multi-ip-workaround/templates/primary-udn.yaml
+apiVersion: k8s.ovn.org/v1
+kind: ClusterUserDefinedNetwork
+metadata:
+  name: primary
+spec:
+  namespaceSelector:
+    matchLabels:
+      primary-udn: primary
+  network:
+    topology: Layer2
+    layer2:
+      role: Primary
+      subnets: [192.168.200.0/24]
+      ipam:
+        lifecycle: Persistent
+---
+# Source: multi-ip-workaround/templates/secondary-udn.yaml
+apiVersion: k8s.ovn.org/v1
+kind: ClusterUserDefinedNetwork
+metadata:
+  name: waxoff-industries-secondary
+spec:
+  namespaceSelector:
+    matchLabels:
+      secondary-udn: waxoff-industries-secondary
+  network:
+    topology: Layer2
+    layer2:
+      role: Secondary
+      ipam:
+        mode: Disabled
+---
+# Source: multi-ip-workaround/templates/ipaddresspool.yaml
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: waxoff-industries-ip-pool
+  namespace: metallb-system
+spec:
+  addresses: [10.46.250.10/21]
+  serviceAllocation:
+    namespaceSelectors:
+      - matchLabels:
+          allow-ipaddresspool: waxoff-industries
+---
+# Source: multi-ip-workaround/templates/network-map.yaml
+apiVersion: forklift.konveyor.io/v1beta1
+kind: NetworkMap
+metadata:
+  name: waxoff-industries-secondary
+  namespace: openshift-mtv
+spec:
+  provider:
+    source:
+      apiVersion: forklift.konveyor.io/v1beta1
+      kind: Provider
+      name: v8-tlv2
+      namespace: openshift-mtv
+    destination:
+      apiVersion: forklift.konveyor.io/v1beta1
+      kind: Provider
+      name: host
+      namespace: openshift-mtv
+  map:
+    - source:
+        id: network-16
+        name: VM Network
+      destination:
+        name: waxoff-industries-secondary
+        namespace: waxoff-industries-mtv
+        type: multus

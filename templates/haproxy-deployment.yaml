@@ -46,5 +46,4 @@ spec:
         - name: config
           configMap:
             name: haproxy-config
-
 {{- end }}

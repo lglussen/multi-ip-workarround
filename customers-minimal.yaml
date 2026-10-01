@@ -1,0 +1,11 @@
+# Optionally override any default settings from values.yaml
+global_default_ports:
+  - port: 80
+
+customers:
+- name: waxoff-industries
+  subnets: ["10.46.250.10/21"]
+  vms:
+  - name: webapp
+    ips:
+    - 10.46.250.15

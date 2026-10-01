@@ -5,10 +5,10 @@ primary_udn:
 # oc get providers -A
 provider: v8-tlv2
 
-# network name should be available from vSphere UI
+# Network name should be available from vSphere UI
 vmware_network_name: VM Network
 
-# extact id from vmware URL: /.*urn:vmomi:Network:(network-16):.*/ --> network-16
+# Extact network_id from vSphere URL: /.*urn:vmomi:Network:(network-16):.*/ --> network-16
 vmware_network_id: network-16
 
 # Default Ports to apply to every VM

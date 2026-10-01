@@ -1,4 +1,5 @@
 {{- range .Values.customers }}
+---
 apiVersion: k8s.ovn.org/v1
 kind: ClusterUserDefinedNetwork
 metadata:
