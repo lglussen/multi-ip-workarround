@@ -10,3 +10,4 @@ helm template . -f customers.yaml
 
 ```
 
+![Alt text](multiple-ip-workarround.svg)
