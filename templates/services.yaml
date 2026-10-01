@@ -1,0 +1,29 @@
+{{- range $customer := .Values.customers }}
+{{- $index := 0 }}
+{{- range $vm := .vms }}
+{{- range $ip := $vm.ips }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-{{ $ip | replace "." "-" }}
+  namespace: {{ $customer.name }}-proxy
+  labels:
+    app: proxy
+  annotations:
+    metallb.io/loadBalancerIPs: "{{ $ip }}"
+spec:
+  type: LoadBalancer
+  selector:
+    app: proxy
+  ports:
+{{- range $port := concat ($vm.ports | default list) $.Values.global_default_ports }}
+    # {{ $vm.name }} {{ $ip }}:{{ $port.port }} 
+    - port: {{ $port.port }}
+      targetPort: {{ add 8080 $index }}
+{{- $index = add $index 1 }}
+{{- end }}
+
+{{- end }}
+{{- end }}
+{{- end }}

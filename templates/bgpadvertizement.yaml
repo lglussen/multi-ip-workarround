@@ -1,0 +1,10 @@
+apiVersion: metallb.io/v1beta1
+kind: BGPAdvertisement
+metadata:
+  name: advertize-all
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+{{- range .Values.customers }}
+    - {{ .name }}-ip-pool
+{{- end }}

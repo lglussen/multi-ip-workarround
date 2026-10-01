@@ -1,0 +1,13 @@
+{{- range .Values.customers }}
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: {{ .name }}-ip-pool
+  namespace: metallb-system
+spec:
+  addresses: {{ .subnets }}
+  serviceAllocation:
+    namespaceSelectors:
+      - matchLabels:
+          allow-ipaddresspool: {{ .name }}
+{{- end }}

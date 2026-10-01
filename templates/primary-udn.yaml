@@ -1,0 +1,18 @@
+{{- range .Values.customers }}
+---
+apiVersion: k8s.ovn.org/v1
+kind: ClusterUserDefinedNetwork
+metadata:
+  name: {{ $.Values.primary_udn.name }}
+spec:
+  namespaceSelector:
+    matchLabels:
+      primary-udn: {{ $.Values.primary_udn.name }}
+  network:
+    topology: Layer2
+    layer2:
+      role: Primary
+      subnets: {{ $.Values.primary_udn.subnets }}
+      ipam:
+        lifecycle: Persistent
+{{- end }}

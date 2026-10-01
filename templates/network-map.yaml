@@ -1,0 +1,28 @@
+{{- range .Values.customers }}
+---
+apiVersion: forklift.konveyor.io/v1beta1
+kind: NetworkMap
+metadata:
+  name: {{ .name }}-secondary
+  namespace: openshift-mtv
+spec:
+  provider:
+    source:
+      apiVersion: forklift.konveyor.io/v1beta1
+      kind: Provider
+      name: {{ $.Values.provider }}
+      namespace: openshift-mtv
+    destination:
+      apiVersion: forklift.konveyor.io/v1beta1
+      kind: Provider
+      name: host
+      namespace: openshift-mtv
+  map:
+    - source:
+        id: {{ .vmware_network_id | default $.Values.vmware_network_id }}
+        name: {{ .vmware_network_name | default $.Values.vmware_network_name }}
+      destination:
+        name: {{ .name }}-secondary
+        namespace: {{ .name }}-mtv
+        type: multus
+{{- end }}

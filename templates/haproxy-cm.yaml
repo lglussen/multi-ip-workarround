@@ -1,0 +1,39 @@
+{{- range .Values.customers }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: haproxy-config
+  namespace: {{ .name }}-proxy
+data:
+  haproxy.cfg: |
+    global
+      log stdout format raw local0
+
+    defaults
+      timeout connect 5s
+      timeout client 30s
+      timeout server 30s
+
+    # HTTP frontends — bind on cluster-reachable ports, forward to VM IPs on secondary UDN
+{{- $index := 0 }}
+{{- range $vm := .vms }}
+{{- range $ip := $vm.ips }}
+{{- range $port := concat ($vm.ports | default list) $.Values.global_default_ports }}
+
+    # {{ $vm.name }} {{ $ip }}:{{ $port.port }} ====================================
+    frontend {{ $vm.name | lower }}_{{ $index }}
+      mode {{ $port.mode | default "http" }}
+      bind *:{{ add 8080 $index }}
+      default_backend {{ $vm.name }}_{{ $index }}
+
+    backend {{ $vm.name | lower }}_{{ $index }}
+      mode {{ $port.mode | default "http" }}
+      server vm {{ $ip }}:{{ $port.port }} check
+
+{{- $index = add $index 1 }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{- end }}

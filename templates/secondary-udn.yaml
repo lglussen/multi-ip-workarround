@@ -1,0 +1,16 @@
+{{- range .Values.customers }}
+apiVersion: k8s.ovn.org/v1
+kind: ClusterUserDefinedNetwork
+metadata:
+  name: {{ .name }}-secondary
+spec:
+  namespaceSelector:
+    matchLabels:
+      secondary-udn: {{ .name }}-secondary
+  network:
+    topology: Layer2
+    layer2:
+      role: Secondary
+      ipam:
+        mode: Disabled
+{{- end }}

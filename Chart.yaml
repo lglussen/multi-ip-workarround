@@ -1,0 +1,3 @@
+apiVersion: v2
+name: multi-ip-workaround
+version: 1.0

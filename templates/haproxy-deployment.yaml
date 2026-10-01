@@ -1,0 +1,50 @@
+{{- range .Values.customers }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proxy
+  namespace: {{ .name }}-proxy
+  labels:
+    app: proxy
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: proxy
+  template:
+    metadata:
+      labels:
+        app: proxy
+      annotations:
+        # NAD name matches ClusterUserDefinedNetwork name (my-secondary-overlay).
+        # Static IP on the secondary overlay; HAProxy uses this to reach VM backends.
+        k8s.v1.cni.cncf.io/networks: '[{"name":"{{ .name }}-secondary","ips": {{ .subnets | toJson }} }]'
+    spec:
+      containers:
+        - name: haproxy
+          image: registry.access.redhat.com/hi/haproxy:3
+          ports:
+
+{{- $index := 0 }}
+{{- range $vm := .vms }}
+{{- range $ip := $vm.ips }}
+{{- range $port := concat ($vm.ports | default list) $.Values.global_default_ports }}
+            # {{ $vm.name }} {{ $ip }}:{{ $port.port }}
+            - name: {{ $port.mode | default "http" }}_{{ $index }}
+              containerPort: {{ add 8080 $index }}
+{{- $index = add $index 1 }} 
+{{- end }}
+{{- end }}
+{{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /usr/local/etc/haproxy
+      volumes:
+        - name: config
+          configMap:
+            name: haproxy-config
+
+{{- end }}
